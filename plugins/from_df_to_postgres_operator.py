@@ -35,7 +35,7 @@ class InsertToPostgresOperator(BaseOperator):
         df = self._get_df()
         rows = list(df.itertuples(index=False, name=None))
         hook = self._get_hook()
-        hook.insert_rows(table='dataframe', rows=rows, replace=True, target_fields=[x.lower() for x in df.columns],replace_index=['marks','name'])
+        hook.insert_rows(table='test_dataframe', rows=rows, replace=True, target_fields=[x.lower() for x in df.columns],replace_index=['marks','name'])
 
 
     def _get_data(self):
