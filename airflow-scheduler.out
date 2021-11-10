@@ -1,6 +1,0 @@
- * Serving Flask app "airflow.utils.serve_logs" (lazy loading)
- * Environment: production
-   WARNING: This is a development server. Do not use it in a production deployment.
-   Use a production WSGI server instead.
- * Debug mode: off
-[[34m2021-11-08 08:14:27,456[0m] {[34m_internal.py:[0m113} INFO[0m -  * Running on http://0.0.0.0:8793/ (Press CTRL+C to quit)[0m
