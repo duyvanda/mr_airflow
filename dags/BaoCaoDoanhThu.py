@@ -32,23 +32,46 @@ dag_params = {
 dag = DAG(prefix+name,
           catchup=False,
           default_args=dag_params,
-          schedule_interval= '*/10 8-17,23-23 * * *',
-          tags=[prefix+name, 'Daily', '10mins']
+          schedule_interval= '*/30 8-17,23-23 * * *',
+          tags=[prefix+name, 'Daily', '30mins']
 )
 
+
+
 def etl_to_postgres():
-    day_ago = 2
+    # day_ago = 3
     datenow = datetime.now().strftime("%Y%m%d")
-    datenow_day_ago = ( datetime.now()-timedelta(day_ago) ).strftime("%Y%m%d")
-    param_1 = f"'{datenow_day_ago}'"
-    # param_2 = f"'20211012'"
+    # datenow_day_ago = ( datetime.now()-timedelta(day_ago) ).strftime("%Y%m%d")
+    # param_1 = f"'{datenow_day_ago}'"
+    param_2 = f"'20161130'"
     param_3 = f"'{datenow}'"
-    print(param_1, param_3)
-    query = f"EXEC [pr_AR_TrackingDebtConfirm]  @Fromdate={param_1}, @Todate={param_3}"
+    print(param_2, param_3)
+    query = f"EXEC [pr_AR_TrackingDebtConfirm]  @Fromdate={param_2}, @Todate={param_3}"
     hook_ms = MsSqlHook(mssql_conn_id='1_dms_conn_id', schema='PhaNam_eSales_PRO', conn_type='odbc')
     hook_ps = PostgresHook(postgres_conn_id="postgres_con", schema="biteam")
-    df1 = hook_ms.get_pandas_df(sql=query, parse_dates={"DateOfOrder": {"dayfirst": True}, "DueDate": {"dayfirst": True}})
-    #
+    df1 = hook_ms.get_pandas_df(sql=query, parse_dates={"DateOfOrder": {"dayfirst": True}, "DueDate": {"dayfirst": True}, "OrderDate": {"dayfirst": True}} )
+
+    # Update 29/10
+    # ctr1 = df1.Terms == 'Gối 1 Đơn Hàng (trong 30 ngày)'
+    # df1a=df1[ctr1].copy()
+    # df1a.DueDate = df1a.DateOfOrder+timedelta(30)
+    # df1a.sort_values('DateOfOrder', axis=0, ascending = True, inplace=True)
+    # df1b = df1a[['BranchID','CustID','OrderNbr']].copy()
+    # df1b.drop_duplicates(keep='first', inplace=True)
+    # df1b['cum_count'] = df1b.groupby(['BranchID','CustID']).cumcount()
+    # df1a = df1a.merge(df1b, how='left', on=['BranchID','CustID', 'OrderNbr'])
+    # df1a['cum_count_plus1'] = df1a['cum_count']+1
+    # df1a = df1a.merge(df1a[['BranchID', 'CustID', 'cum_count', 'OrderNbr', 'DateOfOrder']].drop_duplicates(keep='first').add_prefix('y_'), how='left', left_on=['BranchID', 'CustID', 'cum_count_plus1', 'OrderNbr'], right_on=['y_BranchID','y_CustID','y_cum_count', 'y_OrderNbr'])
+    # df1a.y_DateOfOrder.fillna(df1a.DueDate, inplace=True)
+    # df1a.DueDate = np.where(df1a.DueDate>df1a.y_DateOfOrder, df1a.y_DateOfOrder, df1a.DueDate)
+    # cols_list = df1.columns
+    # df1a = df1a[cols_list]
+    # df1 = df1[~ctr1].append(df1a)
+    # del(df1a)
+    # del(df1b)
+
+
+    
     # df_filter(df1, BranchID='MR0010', OrderNbr='DH012021-06151').to_clipboard()
     # df1.columns
     # df1[checkdup(df1, 2, ['BranchID','OrderDate','OrderNbr','DateOfOrder','DueDate'])]
@@ -93,6 +116,14 @@ def etl_to_postgres():
     khuvuc_dict = df_mkv_viet_tat.to_dict()['khuvuc']
     df1['Territory'] = df1['Territory'].map(khuvuc_dict)
     df1['Position'] = np.where(df1['DebtInCharge']=="CS", "CS", df1['Position'])
+
+    # df1['Action_MY'] = df1['OrderDate'].dt.month.astype('str')+df1['OrderDate'].dt.year.astype('str')
+
+    # df1['Order_MY'] = df1['DateOfOrder'].dt.month.astype('str')+df1['DateOfOrder'].dt.year.astype('str')
+
+    # df1['ReturnOrdAmt_InMonth'] = np.where( df1['Order_MY']==df1['Action_MY'], df1['ReturnOrdAmt'], 0)
+    # df1['DebConfirmAmtRelease_InMonth'] = np.where( df1['Order_MY']==df1['Action_MY'], df1['DebConfirmAmtRelease'], 0)
+
     groupbylist = [
         'OrderNbr', 
         'BranchID', 
@@ -122,12 +153,16 @@ def etl_to_postgres():
     aggregate_dict = {
     'OrderDate': np.max,
     #Group by tien
-    'OpeiningOrderAmt':np.sum,
+    'OpeningOrderAmt':np.sum,
     'OrdAmtRelease':np.sum,
     'DeliveredOrderAmt':np.sum,
     'ReturnOrdAmt': np.sum,
-    'DebConfirmAmt': np.sum,
-    'DebConfirmAmtRelease': np.sum,
+    'DebtConfirmAmt': np.sum,
+    'DebtConfirmAmtRelease': np.sum,
+    # Huy & Xac Nhan In Month
+    # 'ReturnOrdAmt_InMonth': np.sum,
+    # 'DebConfirmAmtRelease_InMonth': np.sum,
+
     #DonHang8
     'CountOpeningOrder':np.sum,
     'CountOrdRelease': np.sum,
@@ -136,16 +171,21 @@ def etl_to_postgres():
     'CountDebtConfirm': np.sum,
     'CountDebtConfirmRelease':np.sum
     }
+
     df2 = pivot(df1, groupbylist, aggregate_dict)
     # df2.columns
+
     rename_dict ={
     # Doanh So
-    'OpeiningOrderAmt': 'tiennodauky',
+    'OpeningOrderAmt': 'tiennodauky',
     'OrdAmtRelease':'tienchotso',
     'DeliveredOrderAmt':'tiengiaothanhcong',
     'ReturnOrdAmt':'tienhuydon',
-    'DebConfirmAmt':'tienlenbangke',
-    'DebConfirmAmtRelease':'tienthuquyxacnhan',
+    'DebtConfirmAmt':'tienlenbangke',
+    'DebtConfirmAmtRelease':'tienthuquyxacnhan',
+    # Huy & Xac Nhan In Month
+    # 'ReturnOrdAmt_InMonth': 'tienhuydon_inmonth',
+    # 'DebConfirmAmtRelease_InMonth': 'tienthuquyxacnhan_inmonth',
     # Don Hang
     'CountOpeningOrder': 'dondauky',
     'CountOrdRelease':'donchotso',
@@ -154,13 +194,24 @@ def etl_to_postgres():
     'CountDebtConfirm':'donlenbangke',
     'CountDebtConfirmRelease':'donthuquyxacnhan'
     }
+
     df2.rename(columns=rename_dict, inplace=True)
+    # update 19/10
+    df2['dongiaothanhcong'] = np.where(df2['DeliveryUnit']=='Nhà vận chuyển', 1, df2['dongiaothanhcong'])
+    trangthaigiaohangdict = {'C':'Đã giao hàng', 'H':'Chưa Xác Nhận', 'D':'KH Không Nhận', 'A':'Đã Xác Nhận', 'R':'Từ Chối Giao Hàng', 'E':'Không Tiếp Tục Giao Hàng'}
+    # get_ms_csv(DELI, 'DELI.csv')
+    DELI=pd.read_csv('/home/biserver/data_lake/CSVDELI/DELI.csv', usecols=['BranchID', 'OrderNbr', 'Status'])
+    DELI['BranchID_OrderNbr'] = DELI['BranchID']+DELI['OrderNbr']
+    # DELI.columns
+    DELI = DELI[['BranchID_OrderNbr','Status']]
+    df2['trangthaigiaohang'] = (df2['BranchID']+df2['OrderNbr']).map(df_to_dict(DELI)).map(trangthaigiaohangdict)
+
+    # end update 19/10
     df2['tiennocongty'] = df2['tiennodauky'] + df2['tienchotso'].values - df2['tienhuydon'].values - df2['tienthuquyxacnhan'].values
     # df2['tiennocongty'] = np.where(df2['chitietnocongty']>0, df2['chitietnocongty'].values, 0)
     # df2['chitietdonnocongty'] = df2['dondauky'] + df2['donchotso'] - df2['donthuquyxacnhan'] - df2['donhuy']
     # df2['donnocongty_old'] = df2.apply(lambda x: x['chitietdonnocongty'] if x['chitietdonnocongty']>0 else 0, axis=1)
     df2['donnocongty'] = np.where(df2['tiennocongty'].values > 0, 1, 0)
-
     df2['donchuagiao'] = df2['donchotso'] - df2['dongiaothanhcong'] - df2['donhuy']
     df2['tiendonchuagiao'] = df2['tienchotso'] - df2['tiengiaothanhcong'] - df2['tienhuydon']
 
@@ -174,17 +225,19 @@ def etl_to_postgres():
     # df2.columns
     # insert_df_to_postgres(tbl_name="f_tracking_debt", df=df2, primary_keys=['ordernbr', 'branchid', 'dateoforder', 'duedate'])
     primary_keys=['ordernbr', 'branchid', 'dateoforder', 'duedate']
-    rows = list(df2.itertuples(index=False, name=None))
-    hook_ps.insert_rows(table='f_tracking_debt', rows=rows, replace=True, target_fields=[x.lower() for x in df2.columns],replace_index=primary_keys)
-#
+    df2['inserted_at'] = datetime.now()
+    commit_psql("truncate table f_tracking_debt cascade;")
+    execute_values_upsert(df2, 'f_tracking_debt', primary_keys)
+    # rows = list(df2.itertuples(index=False, name=None))
+    # hook_ps.insert_rows(table='f_tracking_debt', rows=rows, replace=True, target_fields=[x.lower() for x in df2.columns],replace_index=primary_keys)
+
 dummy_start = DummyOperator(task_id="dummy_start", dag=dag)
 
 py_etl_to_postgres = PythonOperator(task_id="etl_to_postgres", python_callable=etl_to_postgres, dag=dag)
 
 # hello_task4 = ToCSVMsSqlOperator(task_id='sample-task-4', mssql_conn_id="1_dms_conn_id", sql=sql, database="PhaNam_eSales_PRO", path=path, dag=dag)
 
-tab_refresh = TableauRefreshWorkbookOperator(task_id='tab_refresh', workbook_name='Báo Cáo Doanh Thu Tiền Mặt', dag=dag)
-
+tab_refresh = TableauRefreshWorkbookOperator(task_id='tab_refresh', workbook_name='Báo Cáo Doanh Thu Công Nợ', dag=dag)
 
 
 dummy_start >> py_etl_to_postgres >> tab_refresh

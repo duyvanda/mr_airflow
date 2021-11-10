@@ -1,0 +1,78 @@
+Traceback (most recent call last):
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2336, in _wrap_pool_connect
+    return fn()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 364, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 809, in _checkout
+    result = pool._dialect.do_ping(fairy.connection)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 575, in do_ping
+    cursor.execute(self._dialect_specific_select_one)
+psycopg2.OperationalError: SSL SYSCALL error: Socket operation on non-socket
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/biserver/venvaf/bin/airflow", line 8, in <module>
+    sys.exit(main())
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/airflow/__main__.py", line 40, in main
+    args.func(args)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/airflow/cli/cli_parser.py", line 48, in command
+    return func(*args, **kwargs)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/airflow/utils/cli.py", line 91, in wrapper
+    return f(*args, **kwargs)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/airflow/cli/commands/scheduler_command.py", line 63, in scheduler
+    job.run()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/airflow/jobs/base_job.py", line 241, in run
+    session.commit()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 1046, in commit
+    self.transaction.commit()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 504, in commit
+    self._prepare_impl()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 483, in _prepare_impl
+    self.session.flush()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2540, in flush
+    self._flush(objects)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2682, in _flush
+    transaction.rollback(_capture_exception=True)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 182, in raise_
+    raise exception
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2642, in _flush
+    flush_context.execute()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/unitofwork.py", line 422, in execute
+    rec.execute(self)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/unitofwork.py", line 586, in execute
+    persistence.save_obj(
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/persistence.py", line 205, in save_obj
+    for (
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/persistence.py", line 373, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/persistence.py", line 1602, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 314, in connection
+    return self._connection_for_bind(bind, execution_options)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 421, in _connection_for_bind
+    conn = self._parent._connection_for_bind(bind, execution_options)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 433, in _connection_for_bind
+    conn = bind._contextual_connect()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2302, in _contextual_connect
+    self._wrap_pool_connect(self.pool.connect, None),
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2339, in _wrap_pool_connect
+    Connection._handle_dbapi_exception_noconnection(
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1583, in _handle_dbapi_exception_noconnection
+    util.raise_(
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 182, in raise_
+    raise exception
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2336, in _wrap_pool_connect
+    return fn()
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 364, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 809, in _checkout
+    result = pool._dialect.do_ping(fairy.connection)
+  File "/home/biserver/venvaf/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 575, in do_ping
+    cursor.execute(self._dialect_specific_select_one)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL SYSCALL error: Socket operation on non-socket
+
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
