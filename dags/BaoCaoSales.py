@@ -4,7 +4,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-# from airflow.providers.tableau.operators.tableau_refresh_workbook import TableauRefreshWorkbookOperator
+from airflow.providers.tableau.operators.tableau_refresh_workbook import TableauRefreshWorkbookOperator
 # from airflow.providers.postgres.hooks.postgres import PostgresHook
 # from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 
@@ -92,8 +92,8 @@ py_etl_to_postgres = PythonOperator(task_id="etl_to_postgres", python_callable=e
 
 # hello_task4 = ToCSVMsSqlOperator(task_id='sample-task-4', mssql_conn_id="1_dms_conn_id", sql=sql, database="PhaNam_eSales_PRO", path=path, dag=dag)
 
-# tab_refresh = TableauRefreshWorkbookOperator(task_id='tab_refresh', workbook_name='Báo Cáo Doanh Thu Tiền Mặt', dag=dag)
+tab_refresh = TableauRefreshWorkbookOperator(task_id='tab_refresh', workbook_name='Báo Cáo Sales Trong Tháng v1.2', dag=dag)
 
 
-dummy_start >> py_etl_to_postgres
+dummy_start >> py_etl_to_postgres >> tab_refresh
 # >> tab_refresh
